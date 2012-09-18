@@ -1,8 +1,5 @@
 package org.tophat.qrzar.activities.mainactivity;
 
-import java.util.ArrayList;
-import java.util.Map;
-
 import org.tophat.QRzar.models.Player;
 import org.tophat.android.exceptions.HttpException;
 import org.tophat.android.exceptions.NoInternetConnection;
@@ -10,6 +7,7 @@ import org.tophat.qrzar.R;
 import org.tophat.qrzar.activities.gameplayactivity.GamePlayActivity;
 import org.tophat.qrzar.qrscanner.QRScanner;
 import org.tophat.qrzar.qrscanner.QRScannerInterface;
+import org.tophat.qrzar.qrscanner.camera.CameraSurface;
 import org.tophat.qrzar.sdkinterface.SDKInterface;
 
 import android.app.Activity;

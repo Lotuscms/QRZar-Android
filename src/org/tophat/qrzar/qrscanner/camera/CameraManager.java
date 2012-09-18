@@ -1,6 +1,7 @@
 package org.tophat.qrzar.qrscanner.camera;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.tophat.qrzar.qrscanner.QRScannerInterface;
 
@@ -15,9 +16,11 @@ public class CameraManager {
 	
 	private Camera mCamera;
 	private static final String TAG = CameraManager.class.getSimpleName();
+	private SurfaceHolder surfaceHolder;
 	
 	@SuppressLint("NewApi")
 	public CameraManager(SurfaceHolder _surfaceHolder, QRScannerInterface _activity) throws IOException{
+		this.surfaceHolder = _surfaceHolder;
 		
 		if(Build.VERSION.SDK_INT>8){
 			//Assumes the user has a camera.
@@ -26,7 +29,6 @@ public class CameraManager {
 		}else{
 			mCamera = Camera.open();
 		}
-		
 	
 		int degreeOrientation = _activity.getScreenRotation()*90;
 
@@ -39,10 +41,22 @@ public class CameraManager {
 			e.printStackTrace();
 		}
 		
+		List<String> focusModes = parameters.getSupportedFocusModes();
+		
+		//Some phones don't support continuous smooth focus.
+		if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
+		{
+		    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+		}
+		else if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO))
+		{
+		    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+		}
+		mCamera.setParameters(parameters);
+		
 		mCamera.setDisplayOrientation((450-degreeOrientation)%360);
 		
 		mCamera.setPreviewDisplay(_surfaceHolder);
-		
 	}
 	
 	public void startPreview(){

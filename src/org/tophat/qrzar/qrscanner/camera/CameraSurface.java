@@ -26,7 +26,14 @@ public class CameraSurface extends SurfaceView implements Callback {
 	}
 	
 	public void close(){
-		mCameraManager.close();
+		//mCameraManager.cancelPreviewCallback();
+		
+		//Let's just leave it open for now
+		//mCameraManager.close();
+	}
+	
+	public void start(){
+		mCameraManager.startPreview();
 	}
 	
 	public void requestPreviewCallback(){
