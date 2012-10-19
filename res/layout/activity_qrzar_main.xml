@@ -33,7 +33,25 @@
 	        />
 	       
 	    </FrameLayout>
-	    
+	    		    <LinearLayout
+		        android:id="@+id/messageLayout"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_gravity="bottom"
+		        android:baselineAligned="false"
+		        android:alpha="0.9"
+		        android:orientation="horizontal" >
+		        
+		        <TextView
+				    android:id="@+id/mainMessage"
+				    android:layout_width="0dp"
+				    android:layout_weight="1"
+				    android:layout_height="wrap_content"
+				    android:padding="5dp"
+				    android:text="Please scan your t-shirt!"
+				    android:textSize="24dp"
+		            android:gravity="center" />
+		    </LinearLayout>
 	    <ImageView
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"

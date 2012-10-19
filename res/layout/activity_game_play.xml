@@ -12,6 +12,7 @@
 	<LinearLayout 
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
+	    android:id="@+id/wrapper"
 	    android:orientation="vertical" >
 	    
 	    <LinearLayout 
@@ -57,6 +58,7 @@
 	    <FrameLayout
 	        android:layout_width="match_parent"
 	        android:layout_height="0dp"
+	        android:id="@+id/deadbox"
 	        android:layout_weight="1" >
 
 			
@@ -66,7 +68,25 @@
 			    android:layout_height="match_parent"
 			    android:id="@+id/previewView"/>
 	        
-	       
+		    <LinearLayout
+		        android:id="@+id/messageLayout"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_gravity="bottom"
+		        android:baselineAligned="false"
+		        android:alpha="0.9"
+		        android:orientation="horizontal" >
+		        
+		        <TextView
+				    android:id="@+id/userMessage"
+				    android:layout_width="0dp"
+				    android:layout_weight="1"
+				    android:layout_height="wrap_content"
+				    android:padding="5dp"
+				    android:text=""
+				    android:textSize="24dp"
+		            android:gravity="center" />
+		    </LinearLayout>
 	    </FrameLayout>
 	    
 	    <LinearLayout
@@ -96,7 +116,7 @@
 	            	    android:id="@+id/shoot_button"
 	            	    android:layout_width="match_parent"
 	            	    android:layout_height="wrap_content"
-	            	    android:background="@drawable/btn_red_matte"
+	            	    android:background="@drawable/red_button"
 	            	    android:text="@string/shoot"
 	            	    android:textColor="#FFFFFF"
 	            	    android:textSize="40dp"

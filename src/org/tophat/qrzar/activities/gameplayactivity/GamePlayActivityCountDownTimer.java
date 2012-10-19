@@ -46,9 +46,9 @@ public class GamePlayActivityCountDownTimer extends CountDownTimer {
 			return null;
  		}
 
- 	     protected void onPostExecute(Boolean data)
+ 	     protected void onPostExecute(Void data)
  	     {
- 	    	mGamePlayActivity.checkAlive();
+ 	    	mGamePlayActivity.checkAliveUI();
  	     }
  	 }
 

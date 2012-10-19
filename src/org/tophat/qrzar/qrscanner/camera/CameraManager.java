@@ -52,7 +52,12 @@ public class CameraManager {
 		{
 		    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 		}
-		mCamera.setParameters(parameters);
+		
+		try{
+			mCamera.setParameters(parameters);
+		}catch(RuntimeException e){
+			e.printStackTrace();
+		}
 		
 		mCamera.setDisplayOrientation((450-degreeOrientation)%360);
 		
@@ -73,8 +78,19 @@ public class CameraManager {
 		mCamera.setPreviewCallback(_callback);
 	}
 	
-	public void cancelPreviewCallback(){
-		mCamera.setPreviewCallback(null);
+	/**
+	 * Stops the active preview from running - encountering some issues with ensuring that the preview hasn't stopped already, which is currently casuing the application to crash on most active Android devices
+	 */
+	public void cancelPreviewCallback()
+	{
+		try
+		{
+			mCamera.setPreviewCallback(null);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 }

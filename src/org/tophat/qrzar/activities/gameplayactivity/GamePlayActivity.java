@@ -12,7 +12,7 @@ import org.tophat.qrzar.sdkinterface.SDKInterface;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -33,6 +33,13 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
 	private SDKInterface sdk;
 	private TextView mTeam1Score, mTeam2Score, mTimer;
 	private boolean mAlive;
+	private boolean interfaceAliveState;
+	private Button shootButton;
+	
+	/**
+	 * Async task Lock
+	 */
+	private boolean actionLock;
 	
 	private GamePlayActivityCountDownTimer mCountdownTimer;
 	
@@ -53,6 +60,8 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
         mTimer = (TextView)findViewById(R.id.timer);
         
         mAlive = true;
+        interfaceAliveState = true;
+        actionLock = false;
         
         updateScoresAndTimer();
         
@@ -68,7 +77,7 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
     @Override
     public void onPause(){
     	super.onPause();
-    	mQRScanner.close();
+    	//mQRScanner.close();
     }
     
     @Override
@@ -92,13 +101,89 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
     
     public void hasScannedResult(String result)
     {
-    	new HasScannedResult(result).execute();
+    	if (!this.actionLock)
+    	{
+	    	if (this.mAlive)
+	    	{
+		    	if (sdk.isValidPlayerCode(result))
+		    	{
+		    		new HasScannedResult(result).execute();
+		    	}
+	    	}
+	    	else
+	    	{
+	    		if (sdk.isValidRespawnCode(result))
+	    		{
+	    			new RespawnTask(result).execute();
+	    		}
+	    	}
+    	}
     }
+    
+    private class RespawnTask extends AsyncTask<Void, Boolean, Boolean> 
+ 	{	
+ 		private ProgressDialog dialog;
+ 		private String result;
+ 		private HttpException error;
+ 		
+ 		public RespawnTask(String result)
+ 		{
+ 			super();
+ 			
+ 			this.result = result;
+ 			this.error = null;
+ 		}
+ 		
+ 		@Override    
+ 		protected void onPreExecute() 
+ 		{       
+ 		    super.onPreExecute();
+ 		    
+ 		    actionLock = true;
+ 		    
+ 		    dialog = ProgressDialog.show(GamePlayActivity.this, "", 
+ 	                "Respawing...", true);
+ 		}
+ 		    
+ 		protected Boolean doInBackground(Void... details) 
+ 		{
+ 	    	try 
+ 	    	{
+ 				sdk.respawn(sdk.getPlayer(), result);
+ 				
+ 				return true;
+ 			} 
+ 	    	catch (HttpException e) 
+ 	    	{
+ 				e.printStackTrace();
+ 				
+ 				error = e;
+ 				return false;
+ 			}
+ 		}
+
+ 	     protected void onPostExecute(Boolean data)
+ 	     {
+ 	    	this.dialog.cancel();
+ 	    	actionLock = false;
+ 	    	
+ 	    	if (!data)
+ 	    	{
+ 	    		(Toast.makeText(GamePlayActivity.this.getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG)).show();
+ 	    	}
+ 	    	else
+ 	    	{
+ 	    		setUserMessage("Respawn successful!");
+ 	    	}
+ 	     }
+ 	 }
+    
     
     private class HasScannedResult extends AsyncTask<Void, Boolean, Boolean> 
  	{	
  		private ProgressDialog dialog;
  		private String result;
+ 		private HttpException error;
  		
  		public HasScannedResult(String result)
  		{
@@ -112,6 +197,8 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
  		{       
  		    super.onPreExecute();
  		    
+ 		    actionLock = true;
+ 		    error = null;
  		    dialog = ProgressDialog.show(GamePlayActivity.this, "", 
  	                "Termination in progress...", true);
  		}
@@ -127,7 +214,7 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
  	    	catch (HttpException e) 
  	    	{
  				e.printStackTrace();
- 				
+ 				error = e;
  				return false;
  			}
  		}
@@ -136,10 +223,28 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
  	     {
  	    	this.dialog.cancel();
  	    	
+ 	    	actionLock = false;
+ 	    	
  	    	if (data)
  	    	{
- 	    		Toast t = Toast.makeText(GamePlayActivity.this.getApplicationContext(), "Other player terminated", Toast.LENGTH_SHORT);
  	    		Log.i(TAG, "Terminated.");
+ 	    		((TextView) findViewById(R.id.userMessage)).setText("Tagged +1");
+ 	    	}
+ 	    	else
+ 	    	{
+ 	    		if (error.getStatusCode() == 409)
+ 	    		{
+ 	    			setUserMessage("Player is dead or invalid code.");
+ 	    			(Toast.makeText(GamePlayActivity.this.getApplicationContext(), "This player is already dead.", Toast.LENGTH_LONG)).show();
+ 	    		}
+ 	    		else if (error.getStatusCode() == 404)
+ 	    		{
+ 	    			(Toast.makeText(GamePlayActivity.this.getApplicationContext(), "This player does not exist / QR is invalid.", Toast.LENGTH_LONG)).show();
+ 	    		}
+ 	    		else
+ 	    		{
+ 	    			(Toast.makeText(GamePlayActivity.this.getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG)).show();
+ 	    		}
  	    	}
  	     }
  	 }
@@ -154,11 +259,32 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
     	mAlive = sdk.playerIsAlive();
     }
     
-    public void checkIfDead(){
-    	if(mAlive){
+    public void checkAliveUI()
+    {
+    	if(!mAlive && this.interfaceAliveState){
 			mTimer.setTextColor(0xFFFF0000);
-			Log.i(TAG, "OH NOOOO, I'M DEAD.");
+			
+			((View)findViewById(R.id.deadbox)).setBackgroundColor(Color.RED);
+			((View)findViewById(R.id.deadbox)).setAlpha((float) 0.5);
+			shootButton.setText("Respawn");
+			interfaceAliveState = mAlive;
+			setUserMessage("Head to your base to respawn!");
     	}
+    	else if (mAlive && !this.interfaceAliveState)
+    	{
+			mTimer.setTextColor(0xFFFFFFFF);
+			
+			((View)findViewById(R.id.deadbox)).setBackgroundColor(Color.TRANSPARENT);
+			((View)findViewById(R.id.deadbox)).setAlpha((float) 1);
+			shootButton.setText(getString(R.string.shoot));
+			interfaceAliveState = mAlive;
+    	}
+    }
+    
+    public void setUserMessage(String message)
+    {
+    	((TextView) findViewById(R.id.userMessage)).setText(message);
+    	((View) findViewById(R.id.messageLayout)).setBackgroundColor(Color.BLACK);
     }
     
     /**
@@ -168,7 +294,7 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
     private void addListenerToButtons(){
     	GamePlayActivityButtonListener listener = new GamePlayActivityButtonListener(this);
     	
-    	Button shootButton = (Button)findViewById(R.id.shoot_button);
+    	this.shootButton = (Button)findViewById(R.id.shoot_button);
     	shootButton.setId(GamePlayActivityConstants.SHOOT_BUTTON);
     	shootButton.setOnTouchListener(listener);
     	

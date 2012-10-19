@@ -11,8 +11,7 @@ public class GamePlayActivityDeadCheckerRunnable implements Runnable {
 
 	@Override
 	public void run() {
-		mGamePlayActivity.checkIfDead();
-
+		mGamePlayActivity.checkAlive();
 	}
 
 }

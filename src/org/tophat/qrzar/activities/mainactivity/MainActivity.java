@@ -7,7 +7,6 @@ import org.tophat.qrzar.R;
 import org.tophat.qrzar.activities.gameplayactivity.GamePlayActivity;
 import org.tophat.qrzar.qrscanner.QRScanner;
 import org.tophat.qrzar.qrscanner.QRScannerInterface;
-import org.tophat.qrzar.qrscanner.camera.CameraSurface;
 import org.tophat.qrzar.sdkinterface.SDKInterface;
 
 import android.app.Activity;
@@ -15,6 +14,9 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +25,7 @@ import android.view.Menu;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class MainActivity extends Activity implements QRScannerInterface{
 
@@ -48,6 +51,26 @@ public class MainActivity extends Activity implements QRScannerInterface{
         
         addListenerToButtons();
         
+    	// Acquire a reference to the system Location Manager
+    	LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+    	// Define a listener that responds to location updates
+    	LocationListener locationListener = new LocationListener() {
+    	    public void onLocationChanged(Location location) {
+    	      // Called when a new location is found by the network location provider.
+    	    	
+    	      sdk.updateLocation(location);
+    	    }
+
+    	    public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+    	    public void onProviderEnabled(String provider) {}
+
+    	    public void onProviderDisabled(String provider) {}
+    	  };
+
+    	// Register the listener with the Location Manager to receive location updates
+    	locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
     }
 	
 	@Override
@@ -59,7 +82,7 @@ public class MainActivity extends Activity implements QRScannerInterface{
     @Override
     public void onPause(){
     	super.onPause();
-    	mQRScanner.close();
+    	//mQRScanner.close();
     }
     
     @Override
@@ -92,10 +115,20 @@ public class MainActivity extends Activity implements QRScannerInterface{
 	    	
 	    	new AnonymousUserTask().execute();
 	    	
+	    	((TextView) findViewById(R.id.mainMessage)).setText("Please scan the game code");
+	    	
     	}else if(sdk.validToProcessGameCode(result)){
     		
-    		this.stopScanForGame();
-	    	
+       		try
+    		{
+       			this.stopScanForGame();
+    			this.mQRScanner.stop();
+    		}
+    		catch( RuntimeException e)
+    		{
+    			e.printStackTrace();
+    		}
+    		
     		sdk.setGameCode(SDKInterface.decodeGameCode(result));
     		
     		new JoinGameTask().execute();

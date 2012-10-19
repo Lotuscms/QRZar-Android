@@ -12,6 +12,11 @@ public class QRScanner {
 		mCameraSurface = (CameraSurface) _cameraSurface;
 	}
 
+	public void stop()
+	{
+		this.mCameraSurface.stop();
+	}
+	
 	public void close() {
 		mCameraSurface.close();
 	}

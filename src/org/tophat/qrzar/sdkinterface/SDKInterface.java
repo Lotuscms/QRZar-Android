@@ -12,8 +12,9 @@ import org.tophat.android.exceptions.HttpException;
 import org.tophat.android.mapping.Game;
 import org.tophat.android.model.ApiTokenMapper;
 import org.tophat.android.networking.ApiCommunicator;
-import org.tophat.qrzar.activities.mainactivity.MainActivity;
 
+import android.location.Location;
+import android.os.AsyncTask;
 import android.util.Log;
 
 public class SDKInterface 
@@ -22,6 +23,12 @@ public class SDKInterface
 	private static final String TAG = SDKInterface.class.getSimpleName();
 	private ApiCommunicator apic;
 	private Integer score = 0;
+	private Integer aliveReqs = 0;
+	
+	/**
+	 * This variable is used to store the player location before it is updated and sent to the server.
+	 */
+	private Location playerLocation;
 	
 	public SDKInterface()
 	{
@@ -78,12 +85,16 @@ public class SDKInterface
 	 * Test 4
 	 * @throws HttpException 
 	 */
-	public void respawn(Player me) throws HttpException
+	public void respawn(Player me, String respawnCode) throws HttpException
 	{	  
 		PlayerMapper pm = new PlayerMapper(apic);
 		
-		me.setRespawn_code("RESPAW1");
+		//The method name is weird because of constraints added by the Jackson - the JSON library.
+		me.setRespawn_code(respawnCode);
+		
+		//Just to ensure that the players URL is used correctly with this program.
 		me.setAccessUrl("players");
+		
 		pm.update(me);
 	}
 	
@@ -140,6 +151,15 @@ public class SDKInterface
 		boolean aliveBool = alive.getAlive();
 		
 		Log.i(TAG, "Alive:"+aliveBool);
+		
+		this.aliveReqs++;
+		
+		if(aliveReqs >= 5)
+		{
+			new LocationTask().execute();
+			aliveReqs = 0;
+		}
+		
 		return aliveBool;
 	}
 	
@@ -195,9 +215,72 @@ public class SDKInterface
     public static int decodeGameCode(String s){
     	return Integer.parseInt(s);
     }
-    
-    
-    
-    
+
+    /**
+     * This method is called in the game activity when a new location of a player is made available. 
+     * This will then be transfered to the server at the next allotted data transfer.
+     * @param location
+     */
+	public void updateLocation(Location location) 
+	{
+		this.playerLocation = location;
+	}
 	
+    /**
+     * This method sends on the location from the device to the server.
+     */
+    private class LocationTask extends AsyncTask<Void, Void, Void> 
+	{	
+		
+		@Override    
+		protected void onPreExecute() 
+		{       
+		    super.onPreExecute();
+		}
+		    
+		protected Void doInBackground(Void... details) 
+		{
+			PlayerMapper pm = new PlayerMapper(apic);
+			
+			Player p = getPlayer();
+			
+			if (p != null && playerLocation != null)
+			{
+				p.setAccessUrl("players");
+				p.setLatitude(playerLocation.getLatitude());
+				p.setLongitude(playerLocation.getLongitude());
+				
+				try
+				{
+					pm.update(p);
+				}
+				catch (HttpException he)
+				{
+					he.printStackTrace();
+				}
+			}
+			return null;
+		}
+
+	     protected void onPostExecute(Void data)
+	     {
+	     }
+	 }
+
+    /**
+     * This method checks if the code is a valid respawn code for the server.
+     * @param result
+     * @return
+     */
+	public boolean isValidRespawnCode(String result) 
+	{
+		if(result.length() == 6 && result.charAt(0) == 'R' && result.charAt(1) == 'E')
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 }

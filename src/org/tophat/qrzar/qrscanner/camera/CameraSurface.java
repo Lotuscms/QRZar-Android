@@ -5,12 +5,14 @@ import java.io.IOException;
 import org.tophat.qrzar.qrscanner.QRScannerInterface;
 import org.tophat.qrzar.qrscanner.qrdecoder.DecoderCallback;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 public class CameraSurface extends SurfaceView implements Callback {
 	
@@ -26,10 +28,15 @@ public class CameraSurface extends SurfaceView implements Callback {
 	}
 	
 	public void close(){
-		//mCameraManager.cancelPreviewCallback();
+		mCameraManager.cancelPreviewCallback();
 		
 		//Let's just leave it open for now
-		//mCameraManager.close();
+		mCameraManager.close();
+	}
+	
+	public void stop()
+	{
+		this.mCameraManager.close();
 	}
 	
 	public void start(){
@@ -60,13 +67,18 @@ public class CameraSurface extends SurfaceView implements Callback {
 		
 		try {
 			mCameraManager = new CameraManager(holder, mActivity);
-
+			
+			mCameraManager.startPreview();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} 
+		catch (RuntimeException e)
+		{
+			Toast t = Toast.makeText(CameraSurface.this.getContext(), "Failed to connect to camera service.", Toast.LENGTH_LONG);
+			t.show();
+			System.exit(0);
 		}
-		
-		mCameraManager.startPreview();
 	}
 
 	@Override
