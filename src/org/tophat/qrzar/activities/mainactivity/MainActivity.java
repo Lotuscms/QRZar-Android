@@ -1,5 +1,7 @@
 package org.tophat.qrzar.activities.mainactivity;
 
+import java.io.IOException;
+
 import org.tophat.QRzar.models.Player;
 import org.tophat.android.exceptions.HttpException;
 import org.tophat.android.exceptions.NoInternetConnection;
@@ -7,7 +9,7 @@ import org.tophat.qrzar.R;
 import org.tophat.qrzar.activities.gameplayactivity.GamePlayActivity;
 import org.tophat.qrzar.qrscanner.QRScanner;
 import org.tophat.qrzar.qrscanner.QRScannerInterface;
-import org.tophat.qrzar.sdkinterface.SDKInterface;
+import org.tophat.qrzar.sdkinterface.SdkInterface;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -17,6 +19,8 @@ import android.graphics.Rect;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,9 +37,13 @@ public class MainActivity extends Activity implements QRScannerInterface{
 	
 	private QRScanner mQRScanner;
 	private Handler mHandler;
-	public static SDKInterface sdk;
+	public static SdkInterface sdk;
+	public static Context context;
+	
+	private boolean mJoining;
 	
 	public static Player p;
+	public MediaPlayer mp;
 	
 	/**
 	 * Activity life cycle methods
@@ -46,10 +54,19 @@ public class MainActivity extends Activity implements QRScannerInterface{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_qrzar_main);
         
+        this.context = this.getApplicationContext();
+        
         mHandler = new MainActivityMessageHandler(this);
-        sdk = new SDKInterface();
+        sdk = new SdkInterface();
+        
+        this.mJoining = false;
         
         addListenerToButtons();
+        
+        mp = new MediaPlayer().create(MainActivity.this, R.raw.intro);
+        AudioManager audioManager = (AudioManager) getSystemService(MainActivity.AUDIO_SERVICE); audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+        mp.setLooping(true);
+        mp.start();
         
     	// Acquire a reference to the system Location Manager
     	LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -77,12 +94,14 @@ public class MainActivity extends Activity implements QRScannerInterface{
 	public void onResume(){
 		super.onResume();
 		mQRScanner = new QRScanner(findViewById(R.id.cameraSurface));
+		mp.start();
 	}
     
     @Override
     public void onPause(){
     	super.onPause();
     	//mQRScanner.close();
+    	mp.pause();
     }
     
     @Override
@@ -117,8 +136,9 @@ public class MainActivity extends Activity implements QRScannerInterface{
 	    	
 	    	((TextView) findViewById(R.id.mainMessage)).setText("Please scan the game code");
 	    	
-    	}else if(sdk.validToProcessGameCode(result)){
+    	}else if(sdk.validToProcessGameCode(result) && !mJoining){
     		
+    		mJoining = true;
        		try
     		{
        			this.stopScanForGame();
@@ -129,8 +149,9 @@ public class MainActivity extends Activity implements QRScannerInterface{
     			e.printStackTrace();
     		}
     		
-    		sdk.setGameCode(SDKInterface.decodeGameCode(result));
+    		sdk.setGameCode(SdkInterface.decodeGameCode(result));
     		
+    		mp.stop();
     		new JoinGameTask().execute();
     	}
     }
@@ -188,6 +209,7 @@ public class MainActivity extends Activity implements QRScannerInterface{
 	    	
 	    	if (data)
 	    	{
+	    		mJoining = false;
 	 			Intent intent = new Intent(MainActivity.this, GamePlayActivity.class);
 				
 	 			MainActivity.p = sdk.getPlayer();

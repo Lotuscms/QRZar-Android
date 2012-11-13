@@ -27,14 +27,14 @@ public class Constants extends org.tophat.android.Constants
 	 */
 	public final String FACEBOOK_APP_ID = "385044381546657";
 	
-	public final String USER_AGENT = "org.tophat.android.PlatformClient";
+	public final String USER_AGENT = "TopHat QRzar Science Gallery";
 	
 	public final String APP_VERSION = "0.1a";
 	
 	/**
 	 * The API URL requires a trailing slash
 	 */
-	public final String API_URL = "http://arboroia.com:443/";
+	public final String API_URL = "http://api.qrzar.com/";
 	
 	public final int SIGNIN_ACTIVITY = 0x1001;
 	

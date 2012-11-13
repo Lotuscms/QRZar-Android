@@ -7,7 +7,7 @@ import org.tophat.qrzar.R;
 import org.tophat.qrzar.activities.mainactivity.MainActivity;
 import org.tophat.qrzar.qrscanner.QRScanner;
 import org.tophat.qrzar.qrscanner.QRScannerInterface;
-import org.tophat.qrzar.sdkinterface.SDKInterface;
+import org.tophat.qrzar.sdkinterface.SdkInterface;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -30,7 +30,7 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
 	private static final String TAG = GamePlayActivity.class.getSimpleName();
 	private QRScanner mQRScanner;
 	private GamePlayActivityMessageHandler mHandler;
-	private SDKInterface sdk;
+	private SdkInterface sdk;
 	private TextView mTeam1Score, mTeam2Score, mTimer;
 	private boolean mAlive;
 	private boolean interfaceAliveState;
@@ -279,6 +279,8 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
 			shootButton.setText(getString(R.string.shoot));
 			interfaceAliveState = mAlive;
     	}
+    	
+    	updateScores();
     }
     
     public void setUserMessage(String message)
@@ -297,15 +299,14 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
     	this.shootButton = (Button)findViewById(R.id.shoot_button);
     	shootButton.setId(GamePlayActivityConstants.SHOOT_BUTTON);
     	shootButton.setOnTouchListener(listener);
-    	
     }
     
     private void updateScoresAndTimer(){
     	
     	HashMap<String,Integer>map = sdk.getTeamScoresAndRemainingTime();
         
-        mTeam1Score.setText(Integer.toString(map.get("team1Score")));
-        mTeam2Score.setText(Integer.toString(map.get("team2Score")));
+        mTeam1Score.setText(Integer.toString(sdk.team1));
+        mTeam2Score.setText(Integer.toString(sdk.team2));
         
         if(mCountdownTimer!=null)
         	mCountdownTimer.cancel();
@@ -314,6 +315,15 @@ public class GamePlayActivity extends Activity implements QRScannerInterface {
         
         mCountdownTimer.start();
     }
+    
+    private void updateScores(){
+    	
+    	HashMap<String,Integer>map = sdk.getTeamScoresAndRemainingTime();
+        
+        mTeam1Score.setText(Integer.toString(sdk.team1));
+        mTeam2Score.setText(Integer.toString(sdk.team2));
+    }
+    
     /**
      * Interface required methods.
      */
